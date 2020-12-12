@@ -1,0 +1,49 @@
+version: '3.4'
+
+x-common-variables: &common-variables
+  DATASOURCE_HOST: ${DB_HOST}
+  DATASOURCE_USER: ${DB_USER}
+  DATASOURCE_PASSWORD: ${DB_PASSWORD}
+  DATASOURCE_NAME: ${DB_DATABASE}
+  DATASOURCE_PORT: ${DB_PORT}
+
+services:
+  ### MY SQL ###
+  mysqldb:
+    image: library/mysql:5.7
+    environment:
+      - MYSQL_DATABASE=${DB_DATABASE}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+    volumes:
+      -mystorage:/var/lib/mysql
+
+  ### PHP My Admin ###
+  phpmyadmin:
+    depends_on:
+      - mysqldb
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    ports:
+      - '8080:80'
+    environment:
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+
+  ### BLOGPOST-MANAGER ###
+  blogpostmanager:
+    build:
+      context: . #This is the root of the project TestMicroservizi
+      dockerfile: blogpost-manager/Dockerfile
+    ports:
+      -"3333:3333"
+    depends_on:
+      - mysqldb
+    restart: always
+    environment:
+      <<: *common-variables #Common variables will be used in blogpostmanager's dockerfile
+
+volumes:
+  mystorage:
